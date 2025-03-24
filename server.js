@@ -13,9 +13,9 @@ const writeJson = (data) => {
     fs.writeFileSync("repertorio.json", JSON.stringify(data, null, 2));
 };
 
-//pag web simple
+
 app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");  // Debes crear un archivo index.html
+    res.sendFile(__dirname + "/index.html");  
 });
 
 // Obtener canciones
@@ -23,7 +23,7 @@ app.get("/canciones", (req, res) => {
     res.json(readJson());
 });
 
-// Agregar una nueva canción
+// Agregar canción
 app.post("/canciones", (req, res) => {
     const canciones = readJson();
     const nuevaCancion = req.body;
