@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Repertorio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #1a237e;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        table {
+            background-color: #212529;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">🎼 Mi repertorio 🎼</h1>
+
+        <!-- Formulario -->
+        <div class="card p-4 bg-dark text-white">
+            <div class="mb-3">
+                <input type="text" id="cancion" class="form-control" placeholder="Canción">
+            </div>
+            <div class="mb-3">
+                <input type="text" id="artista" class="form-control" placeholder="Artista">
+            </div>
+            <div class="mb-3">
+                <input type="text" id="tono" class="form-control" placeholder="Tono">
+            </div>
+            <button class="btn btn-success" onclick="agregarOEditarCancion()">Agregar</button>
+        </div>
+
+        
+        <h2 class="mt-4">Tabla de canciones 🎤</h2>
+        <table class="table table-dark mt-3">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Canción</th>
+                    <th>Artista</th>
+                    <th>Tono</th>
+                    <th>-</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCanciones"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let idEditando = null;  
+
+        const obtenerCanciones = () => {
+            fetch("/canciones")
+                .then(response => response.json())
+                .then(canciones => {
+                    let html = "";
+                    canciones.forEach((c, index) => {
+                        html += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${c.nombre}</td>
+                                <td>${c.artista}</td>
+                                <td>${c.tono}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm" onclick="cargarCancion(${c.id}, '${c.nombre}', '${c.artista}', '${c.tono}')">Editar</button>
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarCancion(${c.id})">Eliminar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById("tablaCanciones").innerHTML = html;
+                });
+        };
+
+        const cargarCancion = (id, nombre, artista, tono) => {
+            document.getElementById("cancion").value = nombre;
+            document.getElementById("artista").value = artista;
+            document.getElementById("tono").value = tono;
+            idEditando = id;
+        };
+
+        const agregarOEditarCancion = () => {
+            const nombre = document.getElementById("cancion").value;
+            const artista = document.getElementById("artista").value;
+            const tono = document.getElementById("tono").value;
+
+            if (idEditando) {
+                fetch(`/canciones/${idEditando}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nombre, artista, tono })
+                }).then(() => {
+                    idEditando = null;
+                    limpiarFormulario();
+                    obtenerCanciones();
+                });
+            } else {
+                fetch("/canciones", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: Date.now(), nombre, artista, tono })
+                }).then(() => {
+                    limpiarFormulario();
+                    obtenerCanciones();
+                });
+            }
+        };
+
+        const eliminarCancion = (id) => {
+            fetch(`/canciones/${id}`, { method: "DELETE" })
+                .then(() => obtenerCanciones());
+        };
+
+        const limpiarFormulario = () => {
+            document.getElementById("cancion").value = "";
+            document.getElementById("artista").value = "";
+            document.getElementById("tono").value = "";
+            idEditando = null;
+        };
+
+        document.addEventListener("DOMContentLoaded", obtenerCanciones);
+    </script>
+</body>
+</html>
